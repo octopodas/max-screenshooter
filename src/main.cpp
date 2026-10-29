@@ -74,16 +74,17 @@ int main(int argc, char **argv)
         settings.sync();
         QCoreApplication::quit();
     });
-    QObject::connect(overlay, &Overlay::accepted, &app, [&](const QImage &image, const QString &savePath) {
-        overlay->deleteLater(); // frees the full-monitor images before we linger
+    // Runs once the overlay is done; frees its full-monitor images before we linger.
+    const auto finishOverlay = [&] {
+        overlay->deleteLater();
         if (bus.isConnected()) {
             bus.unregisterService(kServiceName);
         }
-        deliver(image, savePath, settings);
+    };
+    // X11 clipboard contents live in the process that owns them, so stay alive without
+    // windows until another application takes the clipboard over.
+    const auto lingerWhileOwningClipboard = [&] {
         settings.sync();
-
-        // X11 clipboard contents live in the process that owns them, so stay alive without
-        // windows until another application takes the clipboard over.
         QClipboard *clipboard = QGuiApplication::clipboard();
         if (!clipboard->ownsClipboard()) {
             QCoreApplication::quit();
@@ -94,6 +95,26 @@ int main(int argc, char **argv)
                 QCoreApplication::quit();
             }
         });
+    };
+
+    QObject::connect(overlay, &Overlay::accepted, &app, [&](const QImage &image, const QString &savePath) {
+        finishOverlay();
+        deliver(image, savePath, settings);
+        lingerWhileOwningClipboard();
+    });
+    QObject::connect(overlay, &Overlay::textRequested, &app, [&](const QImage &image) {
+        finishOverlay();
+        QString error;
+        const QString text = Output::recognizeText(image, settings.ocrLanguages(), &error);
+        if (text.isEmpty()) {
+            QMessageBox::warning(nullptr, QGuiApplication::applicationDisplayName(),
+                                 error.isEmpty() ? QStringLiteral("No text was found in the selection.") : error);
+            settings.sync();
+            QCoreApplication::quit();
+            return;
+        }
+        Output::copyTextToClipboard(text);
+        lingerWhileOwningClipboard();
     });
 
     overlay->start();

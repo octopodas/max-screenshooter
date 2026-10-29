@@ -2,7 +2,9 @@
 
 #include "settings.h"
 
+#include <QBuffer>
 #include <QClipboard>
+#include <QProcess>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -92,6 +94,80 @@ void copyToClipboard(const QImage &image)
     // Tells Klipper to keep the image in its history even if it is set to ignore images.
     data->setData(QStringLiteral("x-kde-force-image-copy"), QByteArray());
     QGuiApplication::clipboard()->setMimeData(data, QClipboard::Clipboard);
+}
+
+void copyTextToClipboard(const QString &text)
+{
+    QGuiApplication::clipboard()->setText(text, QClipboard::Clipboard);
+}
+
+QStringList installedOcrLanguages()
+{
+    QProcess process;
+    process.start(QStringLiteral("tesseract"), {QStringLiteral("--list-langs")});
+    if (!process.waitForFinished(5000) || process.exitCode() != 0) {
+        return {};
+    }
+    // The first line is a header: "List of available languages in "/usr/share/...": (2)"
+    QStringList lines = QString::fromUtf8(process.readAllStandardOutput()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    if (!lines.isEmpty()) {
+        lines.removeFirst();
+    }
+    for (QString &line : lines) {
+        line = line.trimmed();
+    }
+    lines.removeAll(QStringLiteral("osd")); // orientation detection, not a language
+    return lines;
+}
+
+QString ocrLanguageArgument(const QString &configured, const QStringList &installed)
+{
+    if (!configured.isEmpty()) {
+        return configured;
+    }
+    QStringList chosen;
+    for (const QString &language : {QStringLiteral("eng"), QStringLiteral("pol")}) {
+        if (installed.contains(language)) {
+            chosen << language;
+        }
+    }
+    if (chosen.isEmpty() && !installed.isEmpty()) {
+        chosen << installed.constFirst();
+    }
+    return chosen.join(QLatin1Char('+'));
+}
+
+QString recognizeText(const QImage &image, const QString &languages, QString *error)
+{
+    const QStringList installed = installedOcrLanguages();
+    if (installed.isEmpty()) {
+        *error = QStringLiteral("Copying text needs Tesseract. Install it with:\n\n"
+                                "sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-pol");
+        return QString();
+    }
+
+    // Tesseract is tuned for ~300 DPI scans; doubling screen text roughly matches that.
+    const QImage input = image.width() * image.height() <= 4000 * 4000 / 4
+        ? image.scaled(image.size() * 2, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+        : image;
+    QByteArray png;
+    QBuffer buffer(&png);
+    buffer.open(QIODevice::WriteOnly);
+    input.save(&buffer, "PNG");
+
+    QProcess process;
+    process.start(QStringLiteral("tesseract"),
+                  {QStringLiteral("stdin"), QStringLiteral("stdout"), QStringLiteral("-l"), ocrLanguageArgument(languages, installed)});
+    process.write(png);
+    process.closeWriteChannel();
+    if (!process.waitForFinished(60000) || process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
+        *error = QStringLiteral("Tesseract failed: %1").arg(QString::fromUtf8(process.readAllStandardError()).trimmed());
+        return QString();
+    }
+    // Tesseract ends pages with a form feed and pads with blank lines.
+    QString text = QString::fromUtf8(process.readAllStandardOutput());
+    text.remove(QLatin1Char('\f'));
+    return text.trimmed();
 }
 
 QString saveToHistory(const QImage &image, const Settings &settings, const QDateTime &time, QString *error)

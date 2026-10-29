@@ -30,6 +30,7 @@ Q_SIGNALS:
     void expandRequested();
     void saveRequested();
     void copyRequested();
+    void copyTextRequested();
     void cancelRequested();
 
 private:

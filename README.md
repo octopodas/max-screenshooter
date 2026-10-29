@@ -10,6 +10,7 @@ Region screenshots for KDE Plasma 5 on X11. Press **Print**: the monitor under t
 | Drag | Draw a region. Drag the handles to resize it, or drag inside it to move it. |
 | Click a window | Select exactly that window. Double-click it to capture it straight away. |
 | Enter, Ctrl+C, double-click inside, Copy | Copy to the clipboard and close. With nothing selected, copies the whole monitor. |
+| Ctrl+T, Copy text button | Recognize the text in the selection (OCR) and copy it as plain text. Annotations are ignored. |
 | Ctrl+S, Save button | KDE save dialog (PNG, JPEG or WebP, chosen by extension). The image is copied too. |
 | F, whole-screen button | Expand the selection to the whole monitor. |
 | Right-click | Clear the selection; with nothing selected, cancel. |
@@ -32,6 +33,16 @@ The loupe next to the cursor magnifies the pixels around it and shows the positi
 
 The colour-and-size button picks from eight colours and three sizes; the mouse wheel also changes the size while a drawing tool is active. Ctrl+Z undoes and Ctrl+Shift+Z (or Ctrl+Y) redoes. The highlighter keeps its own colour, yellow by default.
 
+### Copying text
+
+Ctrl+T runs the selection through [Tesseract](https://github.com/tesseract-ocr/tesseract) on your machine and copies the recognized text; nothing leaves the computer. It needs:
+
+```sh
+sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-pol
+```
+
+By default it reads English and Polish, whichever of them are installed. Set `[OCR] Languages=eng+deu` (any installed Tesseract codes joined with `+`) to change that. Layout is not kept: columns and tables come out as plain lines.
+
 ### History
 
 Every copied or saved capture is also written to `~/Pictures/Screenshots/Screenshot_YYYY-MM-DD_HH-MM-SS.png`.
@@ -52,6 +63,9 @@ SaveDirectory=...        # last folder used in the save dialog
 PenColor=#e53935
 HighlighterColor=#fdd835
 Size=1                   # 0 thin, 1 medium, 2 thick
+
+[OCR]
+Languages=eng+pol       # empty: English and Polish if installed
 
 [LastRegion]
 DP-0=x,y,width,height    # per monitor

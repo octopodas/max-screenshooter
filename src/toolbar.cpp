@@ -127,6 +127,8 @@ Toolbar::Toolbar(QWidget *parent)
     copy->setText(QStringLiteral("Copy"));
     copy->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     connect(copy, &QToolButton::clicked, this, &Toolbar::copyRequested);
+    QToolButton *copyText = addButton(QStringLiteral("insert-text"), QStringLiteral("Copy the text in the selection (Ctrl+T)"));
+    connect(copyText, &QToolButton::clicked, this, &Toolbar::copyTextRequested);
     QToolButton *cancel = addButton(QStringLiteral("window-close"), QStringLiteral("Cancel (Esc)"));
     connect(cancel, &QToolButton::clicked, this, &Toolbar::cancelRequested);
 

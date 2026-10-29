@@ -30,6 +30,9 @@ public:
     int annotationSize() const;
     void setAnnotationSize(int size);
 
+    // Tesseract languages such as "eng+pol"; empty means pick from what is installed.
+    QString ocrLanguages() const;
+
     void sync();
 
 private:

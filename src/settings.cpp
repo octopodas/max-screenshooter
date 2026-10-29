@@ -87,6 +87,11 @@ void Settings::setAnnotationSize(int size)
     m_config->group("Annotations").writeEntry("Size", size);
 }
 
+QString Settings::ocrLanguages() const
+{
+    return m_config->group("OCR").readEntry("Languages", QString());
+}
+
 void Settings::sync()
 {
     m_config->sync();

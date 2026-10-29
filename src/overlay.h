@@ -28,6 +28,8 @@ Q_SIGNALS:
     // The finished image; savePath is empty when it should only go to the clipboard.
     void accepted(const QImage &image, const QString &savePath);
     void canceled();
+    // The user wants the text in image recognized and copied instead of the image.
+    void textRequested(const QImage &image);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -69,6 +71,7 @@ private:
 
     void accept();
     void saveAs();
+    void copyText();
     void cancel();
     void expand();
     QImage result() const;

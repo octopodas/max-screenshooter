@@ -86,6 +86,7 @@ Overlay::Overlay(const Capture &capture, Settings &settings)
     connect(m_toolbar, &Toolbar::saveRequested, this, &Overlay::saveAs, Qt::QueuedConnection);
     connect(m_toolbar, &Toolbar::copyRequested, this, &Overlay::accept, Qt::QueuedConnection);
     connect(m_toolbar, &Toolbar::cancelRequested, this, &Overlay::cancel, Qt::QueuedConnection);
+    connect(m_toolbar, &Toolbar::copyTextRequested, this, &Overlay::copyText, Qt::QueuedConnection);
     connect(m_stylePanel, &StylePanel::colorChosen, this, [this](const QColor &color) {
         setColor(color);
         m_stylePanel->hide();
@@ -333,6 +334,18 @@ void Overlay::saveAs()
     }
     rememberRegion();
     Q_EMIT accepted(image, path);
+}
+
+void Overlay::copyText()
+{
+    if (m_editingText) {
+        commitDraft();
+    }
+    // Recognize the bare capture: arrows and highlights would only confuse the OCR.
+    const QImage image = m_capture.image.copy(m_selection.isNull() ? rect() : m_selection);
+    rememberRegion();
+    finish();
+    Q_EMIT textRequested(image);
 }
 
 void Overlay::cancel()
@@ -616,6 +629,9 @@ void Overlay::keyPressEvent(QKeyEvent *event)
             return;
         case Qt::Key_S:
             saveAs();
+            return;
+        case Qt::Key_T:
+            copyText();
             return;
         case Qt::Key_Z:
             shift ? redo() : undo();
