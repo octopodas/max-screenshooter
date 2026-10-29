@@ -23,6 +23,7 @@ add_library(screenshooter_core STATIC
     src/geometry.cpp
     src/output.cpp
     src/overlay.cpp
+    src/pinwindow.cpp
     src/settings.cpp
     src/toolbar.cpp
 )

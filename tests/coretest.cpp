@@ -63,6 +63,25 @@ private Q_SLOTS:
         QCOMPARE(placeBeside(QRect(0, 100, 20, 20), size, bounds, 8).left(), 0);
     }
 
+    void scaleAroundKeepsAnchorFixed()
+    {
+        QCOMPARE(scaleAround(QPoint(100, 100), QPoint(150, 150), 2.0), QPoint(50, 50));
+        QCOMPARE(scaleAround(QPoint(100, 100), QPoint(150, 150), 0.5), QPoint(125, 125));
+        QCOMPARE(scaleAround(QPoint(100, 100), QPoint(100, 100), 3.0), QPoint(100, 100));
+    }
+
+    void stepZoomWalksPresetsAndClamps()
+    {
+        QCOMPARE(stepZoom(1.0, 1), 1.25);
+        QCOMPARE(stepZoom(1.0, -1), 0.75);
+        QCOMPARE(stepZoom(1.0, 2), 1.5);
+        QCOMPARE(stepZoom(8.0, 1), 8.0);
+        QCOMPARE(stepZoom(0.1, -1), 0.1);
+        // A zoom between presets moves to the neighbouring preset.
+        QCOMPARE(stepZoom(0.9, 1), 1.0);
+        QCOMPARE(stepZoom(0.9, -1), 0.75);
+    }
+
     void timestampedNameFormat()
     {
         const QDateTime time(QDate(2026, 10, 29), QTime(14, 3, 22));

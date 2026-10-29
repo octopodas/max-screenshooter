@@ -121,6 +121,8 @@ Toolbar::Toolbar(QWidget *parent)
     addSeparator();
     QToolButton *expand = addButton(QStringLiteral("view-fullscreen"), QStringLiteral("Whole screen (F)"));
     connect(expand, &QToolButton::clicked, this, &Toolbar::expandRequested);
+    QToolButton *pin = addButton(QStringLiteral("window-pin"), QStringLiteral("Pin to screen (Ctrl+P)"));
+    connect(pin, &QToolButton::clicked, this, &Toolbar::pinRequested);
     QToolButton *save = addButton(QStringLiteral("document-save-as"), QStringLiteral("Save as… (Ctrl+S)"));
     connect(save, &QToolButton::clicked, this, &Toolbar::saveRequested);
     QToolButton *copy = addButton(QStringLiteral("edit-copy"), QStringLiteral("Copy to clipboard (Enter)"));

@@ -30,6 +30,8 @@ Q_SIGNALS:
     void canceled();
     // The user wants the text in image recognized and copied instead of the image.
     void textRequested(const QImage &image);
+    // The user wants image floating on screen; position is where it was on the desktop.
+    void pinned(const QImage &image, const QPoint &position);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -72,8 +74,10 @@ private:
     void accept();
     void saveAs();
     void copyText();
+    void pin();
     void cancel();
     void expand();
+    QRect area() const; // the selection, or the whole monitor when nothing is selected
     QImage result() const;
     void rememberRegion();
     void finish();

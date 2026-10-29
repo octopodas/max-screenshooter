@@ -101,4 +101,29 @@ QRect placeBeside(const QRect &anchor, const QSize &size, const QRect &bounds, i
     return clampInto(r, bounds);
 }
 
+QPoint scaleAround(const QPoint &topLeft, const QPoint &anchor, qreal factor)
+{
+    const QPointF a(anchor);
+    return (a - (a - QPointF(topLeft)) * factor).toPoint();
+}
+
+qreal stepZoom(qreal zoom, int steps)
+{
+    static const QVector<qreal> levels = {0.1, 0.25, 0.33, 0.5, 0.67, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0};
+    constexpr qreal epsilon = 0.001;
+    for (; steps > 0; --steps) {
+        const auto next = std::find_if(levels.cbegin(), levels.cend(), [zoom](qreal level) {
+            return level > zoom + epsilon;
+        });
+        zoom = next == levels.cend() ? levels.constLast() : *next;
+    }
+    for (; steps < 0; ++steps) {
+        const auto previous = std::find_if(levels.crbegin(), levels.crend(), [zoom](qreal level) {
+            return level < zoom - epsilon;
+        });
+        zoom = previous == levels.crend() ? levels.constFirst() : *previous;
+    }
+    return zoom;
+}
+
 }

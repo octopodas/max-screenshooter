@@ -28,6 +28,7 @@ Q_SIGNALS:
     void undoRequested();
     void redoRequested();
     void expandRequested();
+    void pinRequested();
     void saveRequested();
     void copyRequested();
     void copyTextRequested();

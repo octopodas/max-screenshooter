@@ -1,6 +1,7 @@
 #include "capture.h"
 #include "output.h"
 #include "overlay.h"
+#include "pinwindow.h"
 #include "settings.h"
 
 #include <KWindowSystem>
@@ -19,7 +20,8 @@ namespace
 
 const QString kServiceName = QStringLiteral("local.maxscreenshooter");
 
-void deliver(const QImage &image, const QString &savePath, const Settings &settings)
+// Saves the capture to savePath and the history folder; copy is false for pinned captures.
+void deliver(const QImage &image, const QString &savePath, bool copy, const Settings &settings)
 {
     QStringList errors;
     QString error;
@@ -30,7 +32,9 @@ void deliver(const QImage &image, const QString &savePath, const Settings &setti
     if (settings.historyEnabled() && !savedIntoHistory && Output::saveToHistory(image, settings, QDateTime::currentDateTime(), &error).isEmpty()) {
         errors << QStringLiteral("Could not add the capture to the history folder: %1").arg(error);
     }
-    Output::copyToClipboard(image);
+    if (copy) {
+        Output::copyToClipboard(image);
+    }
     if (!errors.isEmpty()) {
         QMessageBox::warning(nullptr, QGuiApplication::applicationDisplayName(), errors.join(QLatin1Char('\n')));
     }
@@ -74,33 +78,51 @@ int main(int argc, char **argv)
         settings.sync();
         QCoreApplication::quit();
     });
-    // Runs once the overlay is done; frees its full-monitor images before we linger.
+    // After the overlay the process stays alive, without windows if need be, while pins are
+    // open or while it owns the clipboard: X11 clipboard contents live in the owning process.
+    QClipboard *clipboard = QGuiApplication::clipboard();
+    bool overlayOpen = true;
+    int pins = 0;
+    const auto quitIfIdle = [&] {
+        if (!overlayOpen && pins == 0 && !clipboard->ownsClipboard()) {
+            settings.sync();
+            QCoreApplication::quit();
+        }
+    };
+    QObject::connect(clipboard, &QClipboard::changed, &app, [&](QClipboard::Mode mode) {
+        if (mode == QClipboard::Clipboard) {
+            quitIfIdle();
+        }
+    });
+    // Frees the overlay's full-monitor images and lets the next Print start a new capture.
     const auto finishOverlay = [&] {
+        overlayOpen = false;
         overlay->deleteLater();
         if (bus.isConnected()) {
             bus.unregisterService(kServiceName);
         }
     };
-    // X11 clipboard contents live in the process that owns them, so stay alive without
-    // windows until another application takes the clipboard over.
     const auto lingerWhileOwningClipboard = [&] {
         settings.sync();
-        QClipboard *clipboard = QGuiApplication::clipboard();
-        if (!clipboard->ownsClipboard()) {
-            QCoreApplication::quit();
-            return;
-        }
-        QObject::connect(clipboard, &QClipboard::changed, &app, [clipboard](QClipboard::Mode mode) {
-            if (mode == QClipboard::Clipboard && !clipboard->ownsClipboard()) {
-                QCoreApplication::quit();
-            }
-        });
+        quitIfIdle();
     };
 
     QObject::connect(overlay, &Overlay::accepted, &app, [&](const QImage &image, const QString &savePath) {
         finishOverlay();
-        deliver(image, savePath, settings);
+        deliver(image, savePath, true, settings);
         lingerWhileOwningClipboard();
+    });
+    QObject::connect(overlay, &Overlay::pinned, &app, [&](const QImage &image, const QPoint &position) {
+        finishOverlay();
+        deliver(image, QString(), false, settings);
+        auto *pin = new PinWindow(image, position, settings);
+        ++pins;
+        QObject::connect(pin, &QObject::destroyed, &app, [&] {
+            --pins;
+            quitIfIdle();
+        });
+        pin->show();
+        settings.sync();
     });
     QObject::connect(overlay, &Overlay::textRequested, &app, [&](const QImage &image) {
         finishOverlay();

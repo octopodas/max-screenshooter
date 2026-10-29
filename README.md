@@ -11,6 +11,7 @@ Region screenshots for KDE Plasma 5 on X11. Press **Print**: the monitor under t
 | Click a window | Select exactly that window. Double-click it to capture it straight away. |
 | Enter, Ctrl+C, double-click inside, Copy | Copy to the clipboard and close. With nothing selected, copies the whole monitor. |
 | Ctrl+T, Copy text button | Recognize the text in the selection (OCR) and copy it as plain text. Annotations are ignored. |
+| Ctrl+P, Pin button | Float the capture above other windows, right where it was. See [Pinning](#pinning). |
 | Ctrl+S, Save button | KDE save dialog (PNG, JPEG or WebP, chosen by extension). The image is copied too. |
 | F, whole-screen button | Expand the selection to the whole monitor. |
 | Right-click | Clear the selection; with nothing selected, cancel. |
@@ -43,9 +44,24 @@ sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-pol
 
 By default it reads English and Polish, whichever of them are installed. Set `[OCR] Languages=eng+deu` (any installed Tesseract codes joined with `+`) to change that. Layout is not kept: columns and tables come out as plain lines.
 
+### Pinning
+
+Ctrl+P (or the pin button) closes the overlay and leaves the capture, annotations included, floating on top of other windows at the spot you selected. Pins stay out of the taskbar and Alt+Tab, and you can open as many as you like.
+
+| On a pin | What it does |
+| --- | --- |
+| Drag | Move it. |
+| Mouse wheel, + and − | Zoom from 10% to 800%, around the cursor. Ctrl+0 returns to actual size. |
+| Ctrl+wheel | Opacity, down to 20%. |
+| Ctrl+C, Ctrl+S | Copy it, or save it with the KDE dialog. |
+| Double-click, Esc | Close it. |
+| Right-click | All of the above as a menu. |
+
+Pinning does not touch the clipboard. A whole-monitor capture starts at half size, centred, so it doesn't cover the screen.
+
 ### History
 
-Every copied or saved capture is also written to `~/Pictures/Screenshots/Screenshot_YYYY-MM-DD_HH-MM-SS.png`.
+Every copied, saved or pinned capture is also written to `~/Pictures/Screenshots/Screenshot_YYYY-MM-DD_HH-MM-SS.png`.
 
 ## Settings
 
@@ -93,7 +109,7 @@ scripts/bind-print-key.sh
 
 - `src/capture.cpp` grabs the monitor under the cursor before any window is shown, and lists the visible window frames for click-to-snap. GTK client-side shadows are trimmed using `_GTK_FRAME_EXTENTS`.
 - `src/overlay.cpp` is the full-screen selection window. It bypasses the window manager, so panels can't cover it and no open animation plays. It grabs the keyboard and retries until kglobalaccel lets go of the Print key.
-- On X11 the clipboard contents live in the process that set them. After copying, the app closes its window but keeps running until another application takes over the clipboard.
+- On X11 the clipboard contents live in the process that set them. After copying, the app closes its window but keeps running until another application takes over the clipboard. It also keeps running while any of its pins (`src/pinwindow.cpp`) are open.
 - Qt's high-DPI scaling is turned off so that widget pixels match monitor pixels exactly.
 
 ## Limitations

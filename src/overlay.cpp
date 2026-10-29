@@ -87,6 +87,7 @@ Overlay::Overlay(const Capture &capture, Settings &settings)
     connect(m_toolbar, &Toolbar::copyRequested, this, &Overlay::accept, Qt::QueuedConnection);
     connect(m_toolbar, &Toolbar::cancelRequested, this, &Overlay::cancel, Qt::QueuedConnection);
     connect(m_toolbar, &Toolbar::copyTextRequested, this, &Overlay::copyText, Qt::QueuedConnection);
+    connect(m_toolbar, &Toolbar::pinRequested, this, &Overlay::pin, Qt::QueuedConnection);
     connect(m_stylePanel, &StylePanel::colorChosen, this, [this](const QColor &color) {
         setColor(color);
         m_stylePanel->hide();
@@ -342,10 +343,22 @@ void Overlay::copyText()
         commitDraft();
     }
     // Recognize the bare capture: arrows and highlights would only confuse the OCR.
-    const QImage image = m_capture.image.copy(m_selection.isNull() ? rect() : m_selection);
+    const QImage image = m_capture.image.copy(area());
     rememberRegion();
     finish();
     Q_EMIT textRequested(image);
+}
+
+void Overlay::pin()
+{
+    if (m_editingText) {
+        commitDraft();
+    }
+    const QImage image = result();
+    const QPoint position = m_capture.geometry.topLeft() + area().topLeft();
+    rememberRegion();
+    finish();
+    Q_EMIT pinned(image, position);
 }
 
 void Overlay::cancel()
@@ -359,9 +372,14 @@ void Overlay::expand()
     setSelection(rect());
 }
 
+QRect Overlay::area() const
+{
+    return m_selection.isNull() ? rect() : m_selection;
+}
+
 QImage Overlay::result() const
 {
-    return m_composite.copy(m_selection.isNull() ? rect() : m_selection);
+    return m_composite.copy(area());
 }
 
 void Overlay::rememberRegion()
@@ -632,6 +650,9 @@ void Overlay::keyPressEvent(QKeyEvent *event)
             return;
         case Qt::Key_T:
             copyText();
+            return;
+        case Qt::Key_P:
+            pin();
             return;
         case Qt::Key_Z:
             shift ? redo() : undo();

@@ -45,4 +45,10 @@ QPoint clampPoint(const QPoint &pos, const QRect &bounds);
 // else inside its bottom edge; always kept within bounds.
 QRect placeBeside(const QRect &anchor, const QSize &size, const QRect &bounds, int gap);
 
+// The top-left that keeps anchor over the same image point when a window at topLeft is scaled by factor.
+QPoint scaleAround(const QPoint &topLeft, const QPoint &anchor, qreal factor);
+
+// The preset zoom level `steps` notches above (positive) or below (negative) zoom, within 10%-800%.
+qreal stepZoom(qreal zoom, int steps);
+
 }
