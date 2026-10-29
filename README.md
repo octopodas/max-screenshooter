@@ -1,0 +1,88 @@
+# Max Screenshooter
+
+Region screenshots for KDE Plasma 5 on X11. Press **Print**: the monitor under the cursor freezes, you pick a region, and **Enter** copies it to the clipboard.
+
+## Using it
+
+| Action | What it does |
+| --- | --- |
+| Print | Open on the monitor under the cursor. The screen is frozen as it was at that moment. |
+| Drag | Draw a region. Drag the handles to resize it, or drag inside it to move it. |
+| Click a window | Select exactly that window. Double-click it to capture it straight away. |
+| Enter, Ctrl+C, double-click inside, Copy | Copy to the clipboard and close. With nothing selected, copies the whole monitor. |
+| Ctrl+S, Save button | KDE save dialog (PNG, JPEG or WebP, chosen by extension). The image is copied too. |
+| F, whole-screen button | Expand the selection to the whole monitor. |
+| Right-click | Clear the selection; with nothing selected, cancel. |
+| Esc | Cancel. |
+| Arrow keys | Move the selection 1 px (Ctrl: 10 px). With nothing selected, or while dragging, they move the pointer instead. |
+| Shift+arrows | Resize the selection from its bottom-right corner. |
+
+The loupe next to the cursor magnifies the pixels around it and shows the position, or the size while you drag. The last region you used on each monitor is drawn again the next time you open it, so Enter repeats the same capture. A whole-monitor selection is not remembered.
+
+### Annotations
+
+| Key | Tool |
+| --- | --- |
+| V | Adjust selection (default) |
+| A | Arrow |
+| R | Rectangle |
+| T | Text: click, type, Enter to finish (Shift+Enter for a new line, Esc to drop it) |
+| H | Highlighter |
+| P | Pixelate. The block averaging cannot be reversed, unlike a light blur. |
+
+The colour-and-size button picks from eight colours and three sizes; the mouse wheel also changes the size while a drawing tool is active. Ctrl+Z undoes and Ctrl+Shift+Z (or Ctrl+Y) redoes. The highlighter keeps its own colour, yellow by default.
+
+### History
+
+Every copied or saved capture is also written to `~/Pictures/Screenshots/Screenshot_YYYY-MM-DD_HH-MM-SS.png`.
+
+## Settings
+
+`~/.config/max-screenshooterrc`. The app writes most of these itself; the history keys can be edited by hand:
+
+```ini
+[History]
+Enabled=true             # false turns the automatic copies off
+Directory=/home/max/Pictures/Screenshots
+
+[General]
+SaveDirectory=...        # last folder used in the save dialog
+
+[Annotations]
+PenColor=#e53935
+HighlighterColor=#fdd835
+Size=1                   # 0 thin, 1 medium, 2 thick
+
+[LastRegion]
+DP-0=x,y,width,height    # per monitor
+```
+
+## Building and installing
+
+Needs Qt 5.15, KF5 Config and WindowSystem, ECM and xcb. On Kubuntu:
+
+```sh
+sudo apt install cmake extra-cmake-modules qtbase5-dev libkf5config-dev libkf5windowsystem-dev libxcb1-dev
+```
+
+```sh
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$HOME/.local -DBUILD_TESTING=ON
+cmake --build build -j
+ctest --test-dir build
+cmake --install build
+scripts/bind-print-key.sh
+```
+
+`bind-print-key.sh` takes Print from Spectacle and gives it to this app. Spectacle's other shortcuts (Shift+Print, Meta+Print and so on) are left alone. `scripts/restore-spectacle-print-key.sh` gives Print back to Spectacle. You can also change the key later in System Settings → Shortcuts → Max Screenshooter.
+
+## How it works
+
+- `src/capture.cpp` grabs the monitor under the cursor before any window is shown, and lists the visible window frames for click-to-snap. GTK client-side shadows are trimmed using `_GTK_FRAME_EXTENTS`.
+- `src/overlay.cpp` is the full-screen selection window. It bypasses the window manager, so panels can't cover it and no open animation plays. It grabs the keyboard and retries until kglobalaccel lets go of the Print key.
+- On X11 the clipboard contents live in the process that set them. After copying, the app closes its window but keeps running until another application takes over the clipboard.
+- Qt's high-DPI scaling is turned off so that widget pixels match monitor pixels exactly.
+
+## Limitations
+
+- X11 only. Wayland would need KWin's ScreenShot2 D-Bus interface or the desktop portal.
+- Annotations can't be selected or moved once drawn; use undo.

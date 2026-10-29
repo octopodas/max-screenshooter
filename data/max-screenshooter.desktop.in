@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Max Screenshooter
+GenericName=Screenshot Tool
+Comment=Capture a region of the current monitor to the clipboard
+Exec=@KDE_INSTALL_FULL_BINDIR@/max-screenshooter
+Icon=max-screenshooter
+Categories=Qt;KDE;Utility;Graphics;
+Keywords=screenshot;capture;snip;snipping;print;
+StartupNotify=false
+X-KDE-Shortcuts=Print
