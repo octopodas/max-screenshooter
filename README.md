@@ -42,7 +42,7 @@ Ctrl+T runs the selection through [Tesseract](https://github.com/tesseract-ocr/t
 sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-pol
 ```
 
-By default it reads English and Polish, whichever of them are installed. Set `[OCR] Languages=eng+deu` (any installed Tesseract codes joined with `+`) to change that. Layout is not kept: columns and tables come out as plain lines.
+By default it reads English, Polish and Russian, whichever of them are installed (add `tesseract-ocr-rus` for Russian). Set `[OCR] Languages=eng+deu` (any installed Tesseract codes joined with `+`) to change that. Layout is not kept: columns and tables come out as plain lines.
 
 ### Pinning
 
@@ -81,7 +81,7 @@ HighlighterColor=#fdd835
 Size=1                   # 0 thin, 1 medium, 2 thick
 
 [OCR]
-Languages=eng+pol       # empty: English and Polish if installed
+Languages=eng+pol       # empty: English, Polish and Russian if installed
 
 [LastRegion]
 DP-0=x,y,width,height    # per monitor

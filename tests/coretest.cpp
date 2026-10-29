@@ -111,6 +111,7 @@ private Q_SLOTS:
         const QStringList all = {QStringLiteral("deu"), QStringLiteral("eng"), QStringLiteral("pol")};
         QCOMPARE(Output::ocrLanguageArgument(QStringLiteral("deu"), all), QStringLiteral("deu"));
         QCOMPARE(Output::ocrLanguageArgument(QString(), all), QStringLiteral("eng+pol"));
+        QCOMPARE(Output::ocrLanguageArgument(QString(), {QStringLiteral("rus"), QStringLiteral("eng")}), QStringLiteral("eng+rus"));
         QCOMPARE(Output::ocrLanguageArgument(QString(), {QStringLiteral("eng")}), QStringLiteral("eng"));
         QCOMPARE(Output::ocrLanguageArgument(QString(), {QStringLiteral("deu")}), QStringLiteral("deu"));
     }

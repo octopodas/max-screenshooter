@@ -34,7 +34,7 @@ void copyTextToClipboard(const QString &text);
 QStringList installedOcrLanguages();
 
 // Picks the "eng+pol"-style language argument: the configured one, or else whichever of
-// English and Polish are installed.
+// English, Polish and Russian are installed.
 QString ocrLanguageArgument(const QString &configured, const QStringList &installed);
 
 // Recognizes the text in image with the tesseract CLI. Returns an empty string and sets

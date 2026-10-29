@@ -126,7 +126,7 @@ QString ocrLanguageArgument(const QString &configured, const QStringList &instal
         return configured;
     }
     QStringList chosen;
-    for (const QString &language : {QStringLiteral("eng"), QStringLiteral("pol")}) {
+    for (const QString &language : {QStringLiteral("eng"), QStringLiteral("pol"), QStringLiteral("rus")}) {
         if (installed.contains(language)) {
             chosen << language;
         }
